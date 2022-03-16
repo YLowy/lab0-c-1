@@ -276,8 +276,22 @@ struct list_head *split_list(struct list_head *h)
     return tortoise;
 }
 
-struct list_head *merge_two_sorted(struct list_head *l1, struct list_head *l2)
+struct list_head *merge_two_lists(struct list_head *l1, struct list_head *l2)
 {
+    struct list_head *p1 = l1, *p2 = l2;
+    for (; p1->next; p1 = p1->next)
+        ;
+    for (; p2->next; p2 = p2->next)
+        ;
+    if (strcmp(getvalue(p1), getvalue(l2)) == 0) {
+        p1->next = l2;
+        l2->prev = p1;
+        return l1;
+    } else if (strcmp(getvalue(l1), getvalue(p2)) == 0) {
+        p2->next = l1;
+        l1->prev = p2;
+        return l2;
+    }
     struct list_head *ret = NULL;
     struct list_head **tail = &ret;
     while (l1 && l2) {
@@ -298,7 +312,7 @@ void merge_sort(struct list_head **head)
     struct list_head *mid = split_list(*head);
     merge_sort(head);
     merge_sort(&mid);
-    *head = merge_two_sorted(*head, mid);
+    *head = merge_two_lists(*head, mid);
 }
 
 /*
