@@ -684,6 +684,49 @@ bool do_sort(int argc, char *argv[])
     return ok && !error_check();
 }
 
+bool do_mstd(int argc, char *argv[])
+{
+    if (argc != 1) {
+        report(1, "%s takes no arguments", argv[0]);
+        return false;
+    }
+
+    if (!l_meta.l)
+        report(3, "Warning: Calling sort on null queue");
+    error_check();
+
+    int cnt = q_size(l_meta.l);
+    if (cnt < 2)
+        report(3, "Warning: Calling sort on single node");
+    error_check();
+
+    set_noallocate_mode(true);
+    if (exception_setup(true))
+        q_sort_topdown(l_meta.l);
+    exception_cancel();
+    set_noallocate_mode(false);
+
+    bool ok = true;
+    if (l_meta.size) {
+        for (struct list_head *cur_l = l_meta.l->next;
+             cur_l != l_meta.l && --cnt; cur_l = cur_l->next) {
+            /* Ensure each element in ascending order */
+            /* FIXME: add an option to specify sorting order */
+            element_t *item, *next_item;
+            item = list_entry(cur_l, element_t, list);
+            next_item = list_entry(cur_l->next, element_t, list);
+            if (strcasecmp(item->value, next_item->value) > 0) {
+                report(1, "ERROR: Not sorted in ascending order");
+                ok = false;
+                break;
+            }
+        }
+    }
+
+    show_queue(3);
+    return ok && !error_check();
+}
+
 static bool do_dm(int argc, char *argv[])
 {
     if (argc != 1) {
@@ -807,6 +850,28 @@ static bool do_show(int argc, char *argv[])
     return show_queue(0);
 }
 
+static bool do_shuffle(int argc, char *argv[])
+{
+    if (argc != 1) {
+        report(1, "%s takes no arguments", argv[0]);
+        return false;
+    }
+
+    if (!l_meta.l)
+        report(3, "Warning: Try to access null queue");
+    error_check();
+
+    set_noallocate_mode(true);
+    if (exception_setup(true))
+        q_shuffle(l_meta.l);
+    exception_cancel();
+
+    set_noallocate_mode(false);
+
+    show_queue(3);
+    return !error_check();
+}
+
 static void console_init()
 {
     ADD_COMMAND(new, "                | Create new queue");
@@ -832,6 +897,9 @@ static void console_init()
         "                | Remove from head of queue without reporting value.");
     ADD_COMMAND(reverse, "                | Reverse queue");
     ADD_COMMAND(sort, "                | Sort queue in ascending order");
+    ADD_COMMAND(mstd,
+                "                | Sort queue in ascending order (Merge Sort "
+                "top-down)");
     ADD_COMMAND(
         size, " [n]            | Compute queue size n times (default: n == 1)");
     ADD_COMMAND(show, "                | Show queue contents");
@@ -840,6 +908,8 @@ static void console_init()
         dedup, "                | Delete all nodes that have duplicate string");
     ADD_COMMAND(swap,
                 "                | Swap every two adjacent nodes in queue");
+    ADD_COMMAND(shuffle,
+                "                | Shuffle all the element in the queue");
     add_param("length", &string_length, "Maximum length of displayed string",
               NULL);
     add_param("malloc", &fail_probability, "Malloc failure probability percent",

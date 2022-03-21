@@ -169,4 +169,22 @@ void q_reverse(struct list_head *head);
  */
 void q_sort(struct list_head *head);
 
+/**
+ * q_sort() - Sort elements of queue in ascending order (Merge Sort top-down)
+ * @head: header of queue
+ *
+ * No effect if queue is NULL or empty. If there has only one element, do
+ * nothing.
+ */
+void q_sort_topdown(struct list_head *head);
+
+/**
+ * q_shuffle() - Shuffle the list in random
+ * @head: header of queue
+ *
+ * No effect if queue is NULL or empty. If there has only one element, do
+ * nothing.
+ */
+void q_shuffle(struct list_head *head);
+
 #endif /* LAB0_QUEUE_H */

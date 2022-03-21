@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "harness.h"
 #include "queue.h"
@@ -230,6 +231,7 @@ bool q_delete_dup(struct list_head *head)
     return true;
 }
 
+
 /*
  * Attempt to swap every two adjacent nodes.
  */
@@ -257,6 +259,12 @@ void q_swap(struct list_head *head)
     } while (left != head && right != head);
 }
 
+static inline void swapptr(char **a, char **b)
+{
+    (*a) = (char *) ((__intptr_t)(*a) ^ (__intptr_t)(*b));
+    (*b) = (char *) ((__intptr_t)(*b) ^ (__intptr_t)(*a));
+    (*a) = (char *) ((__intptr_t)(*a) ^ (__intptr_t)(*b));
+}
 /*
  * Reverse elements in queue
  * No effect if q is NULL or empty
@@ -269,16 +277,13 @@ void q_reverse(struct list_head *head)
     if (!head || list_empty(head))
         return;
     struct list_head *p = head;
-    struct list_head *tmp;
 
     do {
-        tmp = p->next;
-        p->next = p->prev;
-        p->prev = tmp;
+        swapptr((char **) &(p->prev), (char **) &(p->next));
         p = p->prev;
     } while (p != head);
 }
-/*
+
 struct list_head *split_list(struct list_head *h)
 {
     struct list_head *hare = h->next, *tortoise = h;
@@ -327,7 +332,8 @@ void merge_sort(struct list_head **head)
     merge_sort(&mid);
     *head = merge_two_lists(*head, mid);
 }
-__attribute__((unused)) void q_sort_topdown(struct list_head *head)
+
+void q_sort_topdown(struct list_head *head)
 {
     if (!head || list_is_singular(head) || list_empty(head))
         return;
@@ -342,7 +348,7 @@ __attribute__((unused)) void q_sort_topdown(struct list_head *head)
     head->prev = prev;
     prev->next = head;
 }
-*/
+
 __attribute__((nonnull(2, 3, 4))) static struct list_head *
 merge(void *priv, list_cmp_func_t cmp, struct list_head *a, struct list_head *b)
 {
@@ -508,5 +514,30 @@ void q_sort(struct list_head *head)
     if (!head || list_is_singular(head) || list_empty(head))
         return;
     list_sort(NULL, head, cmpfunc);
+    return;
+}
+
+int randnumber(int *num)
+{
+    (*num)--;
+    return rand() % ((*num) + 1) + 1;
+}
+
+void q_shuffle(struct list_head *head)
+{
+    struct list_head *p;
+    int iter = q_size(head);
+
+    if (!head || list_is_singular(head) || list_empty(head))
+        return;
+
+    srand(time(NULL));
+    while (iter > 1) {
+        int num = randnumber(&iter);
+        p = head;
+        for (int i = 0; i < num; p = p->next, i++)
+            ;
+        list_move_tail(p, head);
+    }
     return;
 }
